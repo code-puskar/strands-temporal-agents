@@ -1,154 +1,102 @@
 # Strands Temporal Agents
 
-AI agents built with Strands framework and Temporal workflows for reliable, distributed execution.
+A comparison of two approaches to building AI agents: simple direct execution vs enterprise-grade distributed workflows.
 
-## What This Does
+## What's This About?
 
-This project combines two powerful frameworks:
-- **Strands**: Simple AI agent framework for building conversational agents
-- **Temporal**: Workflow orchestration platform for reliable, fault-tolerant execution
+I built the same AI agent two different ways to show the trade-offs between simplicity and reliability:
 
-The result? AI agents that can handle file operations, time queries, and LLM conversations with built-in retry logic, error recovery, and execution visibility.
+- **Simple version** (`agent.py`) - Runs directly, great for development
+- **Temporal version** - Distributed with retries, monitoring, and fault tolerance
 
-## Core Files
+Both agents can read files, list directories, tell time, and chat using Ollama.
 
-- `agent.py` - Main agent with Temporal workflows and activities
-- `worker.py` - Worker process that executes agent workflows
-- `client.py` - Client to interact with running agents
-- `ollama_agent.py` - Direct Ollama integration (no Temporal)
-- `simple_agent.py` - Simple Strands agent example
+## Files
 
-## Quick Start
+- `config.py` - Shared configuration
+- `agent.py` - Simple Strands agent
+- `temporal_agent.py` - Workflow definitions
+- `worker.py` - Temporal worker
+- `client.py` - Temporal client
 
-### Prerequisites
-- Python 3.8+
-- [Temporal CLI](https://docs.temporal.io/cli) installed
-- [Ollama](https://ollama.ai) running locally with llama3.2 model
+## Setup
 
-### Setup
+You'll need Python 3.8+, Temporal CLI, and Ollama running locally.
 
 ```bash
-# Install dependencies
 pip install -r requirements.txt
+```
 
-# Start Temporal server (keep this running)
+Optional environment variables:
+```bash
+export OLLAMA_HOST="http://localhost:11434"
+export OLLAMA_MODEL="llama3.2:latest"
+```
+
+## Running
+
+**Simple version:**
+```bash
+python agent.py
+```
+
+**Temporal version:**
+```bash
+# Terminal 1
 temporal server start-dev
-```
 
-### Running the Agent
-
-**Terminal 1 - Start the Worker:**
-```bash
+# Terminal 2  
 python worker.py
-```
 
-**Terminal 2 - Run Tasks:**
-```bash
+# Terminal 3
 python client.py
 ```
 
-## How It Works
+## What Each Agent Can Do
 
-The agent can handle these types of tasks:
-- **File Operations**: "Read file requirements.txt", "List files in current directory"
-- **Time Queries**: "What time is it?"
-- **General Questions**: "What is machine learning?" (uses Ollama LLM)
+- "What time is it?"
+- "List files in current directory"
+- "Read file requirements.txt"
+- "What is machine learning?"
 
-## Temporal UI Dashboard
+## Why Two Versions?
 
-When you run the agent, you can monitor everything through Temporal's web interface at `http://localhost:8233`
+The simple version is perfect for prototyping and development. The Temporal version adds enterprise features:
 
-### Workflows Overview
-![Temporal Workflows](images/temporal-workflows-overview.png)
-*All your agent workflows in one place - see which tasks are running, completed, or failed*
-
-### Workflow Execution Details
-![Workflow Details](images/workflow-execution-details.png)
-*Dive deep into any workflow to see the complete execution timeline and task routing*
-
-### Activity Execution History
-![Activity History](images/activity-execution-history.png)
-*Track individual activities like file reads, API calls, and their retry attempts*
+- Automatic retries when things fail
+- Complete execution history
+- Distributed processing
+- Web UI for monitoring at `http://localhost:8233`
 
 ## Architecture
 
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Client        │───▶│   Temporal       │───▶│   Worker        │
-│                 │    │   Server         │    │                 │
-│ Sends tasks     │    │                  │    │ Executes        │
-│ Gets results    │    │ Orchestrates     │    │ Activities      │
-└─────────────────┘    │ Workflows        │    └─────────────────┘
-                       └──────────────────┘
-                               │
-                               ▼
-                       ┌──────────────────┐
-                       │   Activities     │
-                       │                  │
-                       │ • File I/O       │
-                       │ • Time queries   │
-                       │ • Ollama calls   │
-                       └──────────────────┘
+Simple: User → Agent → Result
+
+Temporal: Client → Temporal Server → Worker → Activities → Result
 ```
 
-## Why Temporal?
+The Temporal version is more complex but handles failures gracefully and scales across multiple machines.
 
-**Without Temporal** (see `ollama_agent.py`):
-- If Ollama is down, your task fails
-- No retry logic
-- No execution history
-- Hard to debug issues
+## Screenshots
 
-**With Temporal** (see `agent.py`):
-- Automatic retries with backoff
-- Complete execution visibility
-- Fault tolerance
-- Easy to scale across machines
+![Temporal Workflows](images/temporal-workflows-overview.png)
+*Workflow monitoring dashboard*
 
-## Examples
+![Workflow Details](images/workflow-execution-details.png)
+*Detailed execution traces*
 
-### Simple Strands Agent
-```python
-from strands import Agent
-
-agent = Agent()
-response = agent("Tell me about agentic AI")
-print(response)
-```
-
-### Temporal-Powered Agent
-The Temporal version handles the same queries but with enterprise-grade reliability:
-
-```python
-# This runs through Temporal workflows
-client = AgentClient(temporal_client)
-result = await client.execute_task("What is Python?", "task-1")
-```
-
-## Development
-
-### Adding New Activities
-1. Create activity function in `agent.py`
-2. Register it in `worker.py`
-3. Add routing logic in `OllamaAgentWorkflow.run()`
-
-### Testing Different Models
-Change the model in `ollama_chat_activity()`:
-```python
-async def ollama_chat_activity(prompt: str, model: str = "llama3.2:latest"):
-```
+![Activity History](images/activity-execution-history.png)
+*Individual activity tracking*
 
 ## Troubleshooting
 
-**Worker not starting?**
-- Check if Temporal server is running: `temporal server start-dev`
-- Verify Ollama is running: `ollama list`
+**Worker won't start?** Make sure Temporal server is running first.
 
-**Tasks failing?**
-- Check Temporal UI at `http://localhost:8233` for detailed error logs
-- Ensure the model exists: `ollama pull llama3.2:latest`
+**Tasks failing?** Check the Temporal UI at `http://localhost:8233` for error details.
 
-**Connection issues?**
-- Default Temporal server runs on `localhost:7233`
-- Web UI is available at `http://localhost:8233`
+**Ollama issues?** Verify it's running with `ollama list` and pull the model if needed.
 
+## The Point
+
+This shows how you can start simple and add enterprise features when you need them. The core agent logic stays the same - you're just changing how it runs.

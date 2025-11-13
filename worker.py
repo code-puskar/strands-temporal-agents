@@ -1,16 +1,14 @@
 import asyncio
 from temporalio.client import Client
 from temporalio.worker import Worker
-from agent import (
-    OllamaAgentWorkflow,
+from config import TEMPORAL_HOST, TASK_QUEUE
+from temporal_agent import (
+    TemporalAgentWorkflow,
     read_file_activity,
-    list_files_activity, 
+    list_files_activity,
     get_time_activity,
-    ollama_chat_activity
+    strands_chat_activity
 )
-
-TASK_QUEUE = "ollama-agent-queue"
-TEMPORAL_HOST = "localhost:7233"
 
 
 async def create_worker():
@@ -19,12 +17,12 @@ async def create_worker():
     return Worker(
         client,
         task_queue=TASK_QUEUE,
-        workflows=[OllamaAgentWorkflow],
+        workflows=[TemporalAgentWorkflow],
         activities=[
             read_file_activity,
             list_files_activity,
             get_time_activity,
-            ollama_chat_activity
+            strands_chat_activity
         ]
     )
 

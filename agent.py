@@ -1,82 +1,61 @@
 import os
-from datetime import datetime, timedelta
-from temporalio import activity, workflow
-from temporalio.common import RetryPolicy
+from datetime import datetime
+from strands import Agent, tool
+from strands.models.ollama import OllamaModel
+from config import OLLAMA_HOST, OLLAMA_MODEL
 
 
-@activity.defn
-async def read_file_activity(path: str) -> str:
-    with open(path, 'r') as f:
-        return f.read()
+@tool
+def read_file(path: str) -> str:
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return f"File not found: {path}"
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
-@activity.defn
-async def list_files_activity(directory: str = ".") -> str:
-    files = os.listdir(directory)
-    return "\n".join(files)
+@tool
+def list_files(directory: str = ".") -> str:
+    try:
+        files = os.listdir(directory)
+        return "\n".join(files)
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 
-@activity.defn
-async def get_time_activity() -> str:
+@tool
+def get_current_time() -> str:
     return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
-@activity.defn
-async def ollama_chat_activity(prompt: str, model: str = "llama3.2:latest") -> str:
-    import ollama
-    response = ollama.chat(
-        model=model,
-        messages=[{'role': 'user', 'content': prompt}]
+def create_agent():
+    return Agent(
+        model=OllamaModel(host=OLLAMA_HOST, model_id=OLLAMA_MODEL),
+        tools=[read_file, list_files, get_current_time],
+        system_prompt="You are a helpful assistant. Give responses in not more than 2-3 lines."
     )
-    return response['message']['content']
 
 
-@workflow.defn
-class OllamaAgentWorkflow:
+def run_demo():
+    agent = create_agent()
     
-    def _get_retry_policy(self) -> RetryPolicy:
-        return RetryPolicy(
-            maximum_attempts=3,
-            initial_interval=timedelta(seconds=1),
-            maximum_interval=timedelta(seconds=10)
-        )
+    demo_tasks = [
+        "What time is it?",
+        "List files in current directory", 
+        "Read file ../requirements.txt",
+        "What is artificial intelligence?"
+    ]
     
-    def _extract_filename(self, task: str) -> str:
-        words = task.split()
-        return words[-1] if len(words) > 1 else "requirements.txt"
-    
-    @workflow.run
-    async def run(self, task: str) -> str:
-        retry_policy = self._get_retry_policy()
-        task_lower = task.lower()
-        
-        if "read file" in task_lower:
-            filename = self._extract_filename(task)
-            return await workflow.execute_activity(
-                read_file_activity,
-                filename,
-                start_to_close_timeout=timedelta(seconds=30),
-                retry_policy=retry_policy
-            )
-        
-        if "list files" in task_lower:
-            return await workflow.execute_activity(
-                list_files_activity,
-                ".",
-                start_to_close_timeout=timedelta(seconds=30),
-                retry_policy=retry_policy
-            )
-        
-        if "time" in task_lower:
-            return await workflow.execute_activity(
-                get_time_activity,
-                start_to_close_timeout=timedelta(seconds=10),
-                retry_policy=retry_policy
-            )
-        
-        return await workflow.execute_activity(
-            ollama_chat_activity,
-            task,
-            start_to_close_timeout=timedelta(minutes=2),
-            retry_policy=retry_policy
-        )
+    for task in demo_tasks:
+        print(f"Task: {task}")
+        try:
+            result = agent(task)
+            print(f"Result: {result}\n")
+        except Exception as e:
+            print(f"Error: {e}\n")
+
+
+if __name__ == "__main__":
+    run_demo()
