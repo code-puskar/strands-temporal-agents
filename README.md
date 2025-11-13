@@ -52,6 +52,11 @@ python worker.py
 python client.py
 ```
 
+**Run tests:**
+```bash
+pytest test_activities.py
+```
+
 ## What Each Agent Can Do
 
 - "What time is it?"
