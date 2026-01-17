@@ -3,7 +3,7 @@ import logging
 from datetime import datetime, timedelta
 from temporalio import activity, workflow
 from temporalio.common import RetryPolicy
-from config import OLLAMA_HOST, OLLAMA_MODEL
+from config import AWS_REGION, BEDROCK_MODEL_ID
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +36,13 @@ async def list_files_activity() -> str:
 @activity.defn
 async def get_fact_activity(topic: str) -> str:
     from strands import Agent
-    from strands.models.ollama import OllamaModel
+    from strands.models import BedrockModel
     
     agent = Agent(
-        model=OllamaModel(host=OLLAMA_HOST, model_id=OLLAMA_MODEL),
+        model=BedrockModel(
+            model_id=BEDROCK_MODEL_ID,
+            region_name=AWS_REGION
+        ),
         system_prompt="Provide interesting, accurate facts about the requested topic. Be concise."
     )
     
@@ -50,11 +53,13 @@ async def get_fact_activity(topic: str) -> str:
 @activity.defn
 async def ai_orchestrator_activity(task: str) -> str:
     from strands import Agent
-    from strands.models.ollama import OllamaModel
+    from strands.models import BedrockModel
     
-    # TODO: optimize this 
     agent = Agent(
-        model=OllamaModel(host=OLLAMA_HOST, model_id=OLLAMA_MODEL),
+        model=BedrockModel(
+            model_id=BEDROCK_MODEL_ID,
+            region_name=AWS_REGION
+        ),
         system_prompt="""Analyze the user request and return a comma-separated list of activities.
 
 Available: time, weather:city, files, fact:topic
