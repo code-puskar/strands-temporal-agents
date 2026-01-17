@@ -5,6 +5,7 @@ __pycache__/
 *.pyd
 .Python
 *.so
+.pytest_cache/
 
 # Virtual Environment
 .venv/
@@ -26,3 +27,6 @@ Thumbs.db
 
 # Environment variables
 .env
+
+# Archive
+archive/

@@ -1,8 +1,8 @@
 import os
 from datetime import datetime
 from strands import Agent, tool
-from strands.models.ollama import OllamaModel
-from config import OLLAMA_HOST, OLLAMA_MODEL, WEATHER_TIMEOUT
+from strands.models import BedrockModel
+from config import AWS_REGION, BEDROCK_MODEL_ID, WEATHER_TIMEOUT
 
 
 @tool
@@ -39,7 +39,10 @@ def get_weather(city: str) -> str:
 
 def create_agent() -> Agent:
     return Agent(
-        model=OllamaModel(host=OLLAMA_HOST, model_id=OLLAMA_MODEL),
+        model=BedrockModel(
+            model_id=BEDROCK_MODEL_ID,
+            region_name=AWS_REGION
+        ),
         tools=[get_time, list_files, get_weather],
         system_prompt="Use available tools to provide accurate, helpful responses."
     )

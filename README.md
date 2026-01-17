@@ -2,83 +2,165 @@
 
 A comparison of two approaches to building AI agents: simple direct execution vs enterprise-grade distributed workflows.
 
+This repository contains two example implementations:
+1. **Simple Agent** - Basic file/time/weather operations
+2. **Docker Container Health Monitor** - Production-ready DevOps monitoring
+
+## Repository Structure
+
+```
+strands-temporal-agents/
+├── config.py                    # Shared configuration
+├── requirements.txt             # Python dependencies
+├── .env.example                 # Environment variable template
+├── BEDROCK-MIGRATION.md        # AWS Bedrock migration guide
+│
+├── simple_agent/               # Basic agent demo
+│   ├── agent.py                # Simple agent
+│   ├── temporal_agent.py       # Temporal workflows
+│   ├── worker.py               # Temporal worker
+│   ├── client.py               # Temporal client
+│   ├── test_workflow.py        # Tests
+│   └── README.md               # Simple agent docs
+│
+└── docker_monitor/             # Docker monitoring agent
+    ├── docker_agent.py         # Simple Docker agent
+    ├── docker_temporal_agent.py # Temporal Docker agent
+    ├── docker_worker.py        # Temporal worker
+    ├── docker_client.py        # Temporal client
+    ├── docker_utils.py         # Docker utilities
+    ├── docker-compose.demo.yml # Demo containers
+    ├── test_docker_agent_basic.py # Tests
+    ├── validate_docker_monitor.py # Validation
+    ├── README.md               # Docker monitor docs
+    └── docs/                   # Demo guides
+```
+
 ## What's This About?
 
 Two different ways to build the same AI agent to show the trade-offs between simplicity and reliability:
 
-- **Simple version** (`agent.py`) - Runs directly, great for development
+- **Simple version** - Runs directly, great for development
 - **Temporal version** - Distributed with retries, monitoring, and fault tolerance
 
-Both agents can read files, list directories, tell time, and chat using Ollama.
+---
 
-## Files
+## Docker Container Health Monitor
 
-- `config.py` - Shared configuration
-- `agent.py` - Simple Strands agent
-- `temporal_agent.py` - Workflow definitions
-- `worker.py` - Temporal worker
-- `client.py` - Temporal client
+A practical DevOps use case demonstrating AI-powered Docker container monitoring.
 
-## Setup
+**Location:** `docker_monitor/` directory
 
-You'll need Python 3.8+, Temporal CLI, and Ollama running locally.
+### Quick Start
 
 ```bash
-pip install -r requirements.txt
+cd docker_monitor
+
+# Start demo containers
+docker compose -f docker-compose.demo.yml up -d
+
+# Run simple agent
+python docker_agent.py
+
+# Or run Temporal version (3 terminals)
+temporal server start-dev    # Terminal 1
+python docker_worker.py      # Terminal 2
+python docker_client.py      # Terminal 3
 ```
 
-Optional environment variables:
-```bash
-export OLLAMA_HOST="http://localhost:11434"
-export OLLAMA_MODEL="llama3.2:latest"
-```
+### Features
 
-## Running
+- **Container Status Monitoring** - Check running/stopped containers
+- **Health Checks** - Verify container health with CPU/memory metrics
+- **Log Retrieval & Analysis** - View and analyze container logs
+- **Container Restart** - Restart unhealthy containers
+- **AI-Powered Interface** - Natural language queries
 
-**Simple version:**
+**See `docker_monitor/README.md` for complete documentation**
+
+---
+
+## Simple Agent (Basic Demo)
+
+Basic file/time/weather operations demonstrating the Temporal pattern.
+
+**Location:** `simple_agent/` directory
+
+### Quick Start
+
 ```bash
+cd simple_agent
+
+# Run simple agent
 python agent.py
+
+# Or run Temporal version (3 terminals)
+temporal server start-dev    # Terminal 1
+python worker.py             # Terminal 2
+python client.py             # Terminal 3
 ```
 
-**Temporal version:**
-```bash
-# Terminal 1
-temporal server start-dev
-
-# Terminal 2  
-python worker.py
-
-# Terminal 3
-python client.py
-```
-
-**Run tests:**
-```bash
-pytest test_activities.py
-```
-
-## What Each Agent Can Do
+### Capabilities
 
 - "What time is it?"
-- "List files in current directory"
-- "Read file requirements.txt"
-- "What is machine learning?"
+- "List Python files"
+- "What's the weather in Tokyo?"
+
+**See `simple_agent/README.md` for complete documentation**
+
+---
+
+## Prerequisites
+
+- **Python 3.8+**
+- **AWS Account** with Bedrock access (for AI models)
+- **Temporal CLI** (for Temporal versions)
+- **Docker** (for Docker monitor demo)
+
+## Installation
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure AWS credentials
+aws configure
+
+# Request Bedrock model access (one-time)
+# See BEDROCK-MIGRATION.md for details
+```
+
+## Configuration
+
+Environment variables (optional):
+```bash
+export AWS_REGION=us-east-1
+export BEDROCK_MODEL_ID=us.anthropic.claude-sonnet-4-20250514-v1:0
+export TEMPORAL_HOST=localhost:7233
+```
+
+All configuration is centralized in `config.py`.
 
 ## Why Two Versions?
 
 The simple version is perfect for prototyping and development. The Temporal version adds enterprise features:
 
-- Automatic retries when things fail
-- Complete execution history
-- Distributed processing
-- Web UI for monitoring at `http://localhost:8233`
+- ✅ Automatic retries when things fail
+- ✅ Complete execution history
+- ✅ Distributed processing
+- ✅ Web UI for monitoring at `http://localhost:8233`
+- ✅ Fault tolerance
 
 ## Architecture
 
+**Simple Agent:**
 ```
-Simple: User → Agent → Result
+User Query → Agent → Tools → Result
+```
 
-Temporal: Client → Temporal Server → Worker → Activities → Result
+**Temporal Agent:**
+```
+User Query → Client → Temporal Server → Worker → Activities → Result
 ```
 
 The Temporal version is more complex but handles failures gracefully and scales across multiple machines.
@@ -94,14 +176,25 @@ The Temporal version is more complex but handles failures gracefully and scales 
 ![Activity History](images/activity-execution-history.png)
 *Individual activity tracking*
 
+## Documentation
+
+- **BEDROCK-MIGRATION.md** - AWS Bedrock setup and migration guide
+- **simple_agent/README.md** - Simple agent documentation
+- **docker_monitor/README.md** - Docker monitor documentation
+- **docker_monitor/docs/** - Demo guides and structure
+
 ## Troubleshooting
 
 **Worker won't start?** Make sure Temporal server is running first.
 
 **Tasks failing?** Check the Temporal UI at `http://localhost:8233` for error details.
 
-**Ollama issues?** Verify it's running with `ollama list` and pull the model if needed.
+**AWS Bedrock issues?** Verify credentials with `aws sts get-caller-identity` and check model access.
+
+**Docker issues?** Ensure Docker Desktop is running with `docker ps`.
 
 ## The Point
 
 This shows how you can start simple and add enterprise features when you need them. The core agent logic stays the same - you're just changing how it runs.
+
+Start with the simple version for rapid development, then switch to Temporal when you need production-grade reliability.
