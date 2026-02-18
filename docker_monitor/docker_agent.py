@@ -7,8 +7,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from strands import Agent, tool
-from strands.models import BedrockModel
-from config import AWS_REGION, BEDROCK_MODEL_ID
+from strands.models import OllamaModel
+# from strands.models import BedrockModel
+# from config import AWS_REGION, BEDROCK_MODEL_ID
 from docker_monitor.docker_utils import (
     DockerClientWrapper,
     DockerConnectionError,
@@ -231,9 +232,9 @@ def analyze_container_logs(container_name: str, lines: int = 100) -> str:
 def create_agent() -> Agent:
     """Create and configure the Docker monitoring agent."""
     return Agent(
-        model=BedrockModel(
-            model_id=BEDROCK_MODEL_ID,
-            region_name=AWS_REGION
+        model=OllamaModel(
+            host=None,
+            model_id="mistral"
         ),
         tools=[get_container_status, check_container_health, get_container_logs, restart_container, analyze_container_logs],
         system_prompt="""You are a Docker container health monitoring assistant. 

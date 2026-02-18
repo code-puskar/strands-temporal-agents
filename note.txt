@@ -1,0 +1,39 @@
+# Project Overview: Strands Temporal Agents
+
+This project demonstrates how to build two types of AI agents:
+1.  **Simple Agent**: Basic functionality (checking time, weather, file listing).
+2.  **Docker Monitor Agent**: A DevOps tool to monitor and control Docker containers.
+
+We have modified both to run locally using **Ollama** and the **Mistral** model.
+
+## Folder Structure & Key Files
+
+### 1. Simple Agent (`simple_agent/`)
+This is a basic example to get started.
+
+-   **`agent.py`**: The entry point for the simple agent.
+    -   *What we changed*: Configured it to use `OllamaModel(host=None, model_id="mistral")`.
+    -   *What it does*: Loads tools (like `http_request`) and asks the AI model to answer queries.
+-   **`temporal_agent.py`**: (Not used yet) Same logic but wrapped in a Temporal Workflow for distributed execution.
+-   **`params.py`**: (If present) Parameters for the simple agent.
+
+### 2. Docker Monitor Agent (`docker_monitor/`)
+This is a real-world use case for monitoring infrastructure.
+
+-   **`docker_agent.py`**: The main script we run.
+    -   *What we changed*: Configured it to use `OllamaModel(host=None, model_id="mistral")`.
+    -   *What it does*: Defines specific tools (`get_container_status`, `restart_container`) using the `@tool` decorator and passes them to the AI agent.
+-   **`docker_utils.py`**: Helper functions that interact directly with the Docker Daemon (using `docker-py` library). The agent calls these functions.
+-   **`docker-compose.demo.yml`**: A configuration file to spin up demo containers (Nginx, Redis, Logger) so the agent has something to monitor.
+
+### 3. Configuration & Environment (`/`)
+-   **`config.py`**: Contains default settings (like AWS region, Docker socket path). We bypassed some of this to use local models.
+-   **`venv/`**: The Python virtual environment where dependencies (like `ollama`, `strands`, `docker`) are installed.
+
+## How it Works (Flow)
+
+1.  **User Input**: You type a query (e.g., "Check container status").
+2.  **AI Processing**: The Python script sends this query to the local Mistral model (via Ollama).
+3.  **Tool Selection**: The AI decides which tool to use (e.g., `get_container_status`).
+4.  **Execution**: The Python code executes the tool (listing containers via Docker API).
+5.  **Response**: The result is sent back to the AI, which formulates a human-readable answer for you.
